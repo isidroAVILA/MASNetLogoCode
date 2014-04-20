@@ -57,11 +57,181 @@ to setup-manager
     ]
 end
 
+to setup-supermarket
+  create-supermarkets 1 [
+    set shape "house"
+    set size 3
+    setxy  15 15
+    set color cyan 
+    set label "SuperMarket"
+  ]
+end
+
 to run-simulation
-  ask people [execute-intentions]
-  ask managers [execute-intentions] 
+  ask robots [execute-intentions]
+  ask owners [execute-intentions] 
   tick
 end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Owners Actions
+
+to process-message
+  let msg get-message
+  if get-performative msg = "inform"
+     [
+      if get-content msg = "no-beer" [add-intention "ask-for-beer" "true"]
+      if get-content msg = "have-beer" 
+         [
+           add-intention "waiting-for-my-drink" "true"
+           send add-content "bring-some" create-reply "request" msg
+           ]
+     ]     
+end
+
+;;; Initial owner intetion. 
+to want-some-beer
+  send add-receiver my-robot add-content "beer?" create-message "query"
+  add-intention "process-message" "true"
+  add-intention "wait-for-beer" "message-is-here"
+end
+
+;;; Waiting for the drink and consuming it when it arrives 
+to waiting-for-my-drink
+  add-intention "drink-beer" "no-beer"
+  add-intention "wait-for-beer" "have-beer"
+end
+
+to ask-for-beer 
+  add-intention "waiting-for-my-drink" "true"
+  send add-receiver my-robot add-content "beer?" create-message "request"
+end 
+
+;;; If there is a message in the queue
+to-report message-is-here
+   report get-message-no-remove != "no_message" 
+end
+ 
+to wait-for-beer
+  ;;; do nothing
+end 
+ 
+ 
+to drink-beer
+  if beer > 0 [set beer beer - 1]
+end
+
+;;; Owners Sensors 
+to-report have-beer
+  report beer > 0
+end
+
+to-report no-beer
+  report beer = 0  
+end
+
+to-report my-robot
+  report [who] of one-of robots
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Main intention that listens and responds to messages.
+to waiting-for-commands
+  let msg get-message
+  if msg = "no_message" [stop]
+  
+  if get-performative msg = "request" and get-content msg = "beer?" [add-intention "get-beer" "true"]
+  if get-performative msg = "request" and get-content msg = "bring-some" [add-intention "deliver-beer" "true"]
+  if get-performative msg = "query" and get-content msg = "beer?" 
+     [ ifelse have-beer 
+        [send add-content "have-beer" create-reply "inform" msg]
+        [send add-content "no-beer" create-reply "inform" msg]
+     ]
+         
+end
+
+;;; delivers beer and moves back to the original position. Obviously this is applicable 
+;;; when the robot has beer. 
+to deliver-beer
+   add-intention "move-to-position" "at-position"
+   add-intention "drop-beer" "true"
+   add-intention "move-to-owner" "at-owner" 
+end
+
+;;; Plan for getting some beer from the supermarket and delivering it to the owner.
+to get-beer
+   add-intention "deliver-beer" "true"
+   add-intention "buy-beer" "have-beer"
+   add-intention "move-to-supermarket" "at-supermarket"
+    if (money < 10) [
+     add-intention "get-money" "true"
+     add-intention "move-to-bank" "at-bank"
+   ]
+   
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Robot Actions
+to move-to-supermarket
+  face one-of supermarkets
+  fd 1
+end
+
+to move-to-owner
+  face one-of owners
+  fd 1
+end
+
+to move-to-bank
+  face one-of banks
+  fd 1
+end
+
+to move-to-position
+  face one-of patches with [pcolor = grey]
+  fd 1
+end
+
+to buy-beer
+  if money >= 10 
+    [set beer beer + 10
+     set money  money - 10 
+      ]
+end
+
+to drop-beer
+  ask one-of owners in-radius 1.5 [set beer beer + 2]
+  set beer beer - 2 
+  set total-beers-delivered total-beers-delivered + 2
+end
+
+to get-money
+  set money robot-money
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Robot reporters
+to-report at-owner
+   report any? owners in-radius 1  
+end
+
+to-report at-bank
+   report any? banks in-radius 1  
+end
+
+
+to-report at-supermarket
+   report any? supermarkets in-radius 1  
+end
+
+to-report at-position
+  report pcolor = grey
+end
+
+
 
 @#$#@#$#@
 GRAPHICS-WINDOW
