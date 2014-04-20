@@ -1,60 +1,65 @@
 __includes ["bdi.nls" "communication.nls"]
 
-;;; A simple model to test the BDI and Communications libraries.
+;;; A model that has explicit communication between agents
 
-breed [managers manager]
-breed [people person]
-breed [skills skill]
-breed [resources resource]
+breed [owners owner]
+breed [robots robot]
+breed [supermarkets supermarket]
+breed [banks bank]
 
-people-own [rtask money intentions beliefs incoming-queue total-tasks-executed]
-managers-own [rtask money time intentions beliefs incoming-queue total-tasks-finished]
+robots-own [beer money intentions beliefs incoming-queue total-beers-delivered]
+owners-own [beer intentions beliefs incoming-queue]
 
-to setup
+
+to setup 
   ca
-  setup-person
-  setup-manager
+  
+  setup-robot
+  setup-owner
+  setup-supermarket
+  setup-banks  
   reset-ticks
 end
 
-to setup-skills
-	create-skills 1
-		[
-			set shape "rectangle"
-			set color green
-			set size 10
-			setxy -10 10
-			set label "Skills Zone"
-		]
+to setup-banks
+  create-banks 1 
+    [set shape "triangle"
+      set color red
+     set size 3 
+     setxy -10 10
+     set label "Bank"
+    ]
+
 end
 
-to setup-person
-	create-people 1 [
-    	set shape "cylinder"
-    	set size 1
-    	setxy  5 0
-    	set color green 
-    	ask patch-here [set pcolor grey]
-    	set rtask 0
-    	set total-tasks-executed 0
-    	set money person-money
-    	set intentions []
-    	set incoming-queue []
-    	add-intention "waiting-for-commands" "false"
+to setup-robot
+  create-robots 1 [
+    set shape "cylinder"
+    set size 1
+    setxy  5 0
+    set color green 
+    ask patch-here [set pcolor grey]
+    set beer 0
+    set total-beers-delivered 0
+    set money robot-money
+    set intentions []
+    set incoming-queue []
+    add-intention "waiting-for-commands" "false"
   ]
 end
-
-to setup-manager
-  create-managers 1 [
+  
+  
+to setup-owner
+  create-owners 1 [
     set shape "person"
     set color red
     set size 2
     setxy  0 0
-    set rtask 0 
+    set beer 0 
     set intentions []
     set incoming-queue []
-    add-intention "want-some-task" "false"
-    ]
+    add-intention "want-some-beer" "false"
+  ]
 end
 
 to setup-supermarket
@@ -175,9 +180,6 @@ end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Robot Actions
-
-;;; Person Actions
-
 to move-to-supermarket
   face one-of supermarkets
   fd 1
@@ -212,8 +214,7 @@ to drop-beer
 end
 
 to get-money
-  ;;;; set money robot-money
-  set money person-money
+  set money robot-money
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -234,73 +235,206 @@ end
 to-report at-position
   report pcolor = grey
 end
-
-
-
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+444
 10
-649
-470
+949
+536
 16
 16
-13.0
+15.0
 1
-10
+8
 1
 1
 1
 0
-1
-1
+0
+0
 1
 -16
 16
 -16
 16
-0
-0
+1
+1
 1
 ticks
 30.0
 
+BUTTON
+6
+25
+79
+58
+NIL
+setup
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SWITCH
+183
+262
+354
+295
+show-intentions
+show-intentions
+0
+1
+-1000
+
+BUTTON
+85
+25
+148
+58
+Run
+run-simulation
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+5
+63
+191
+96
+Run (cont)
+run-simulation
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+4
+103
+168
+148
+Owner Beer
+[beer] of one-of owners
+17
+1
+11
+
+MONITOR
+175
+104
+338
+149
+Robot beer
+[beer] of one-of robots
+17
+1
+11
+
+SLIDER
+201
+64
+373
+97
+robot-money
+robot-money
+0
+100
+20
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+7
+156
+169
+201
+NIL
+[money] of one-of robots
+17
+1
+11
+
+SWITCH
+1
+262
+175
+295
+show_messages
+show_messages
+0
+1
+-1000
+
+PLOT
+6
+315
+373
+465
+Beer 
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -2674135 true "" "plot [beer] of one-of owners"
+"pen-1" 1.0 0 -14730904 true "" "plot [beer] of one-of robots"
+
+MONITOR
+175
+157
+335
+202
+Total Beers
+[total-beers-delivered] of one-of robots
+17
+1
+11
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+This is the famous "Robot Beer" example from wooldridge. A robot is instructed to get some beer from the supermarket. 
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+The owner requests beer from the robot, which in turn travels to the fridge and gets one. If the fridge is empty, then it rushes to the supermarket to get some. That is in the case it does have some money to afford it; if the latter is not the case, then it rushes to the bank first.  
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
-
-## THINGS TO NOTICE
-
-(suggested things for the user to notice while running the model)
-
-## THINGS TO TRY
-
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
-## EXTENDING THE MODEL
-
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+Set the amount of money the user has press setup and then run the experiment. 
 
 ## NETLOGO FEATURES
 
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
+Model Uses bdi.nls for intention handling and communication.nls for passing FIPA like messages. 
 
 ## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+Check the following web address for updates on the libraries mentioned above.
+http://users.uom.gr/~iliass
 @#$#@#$#@
 default
 true
@@ -496,19 +630,12 @@ Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
 
 sheep
 false
-15
-Circle -1 true true 203 65 88
-Circle -1 true true 70 65 162
-Circle -1 true true 150 105 120
-Polygon -7500403 true false 218 120 240 165 255 165 278 120
-Circle -7500403 true false 214 72 67
-Rectangle -1 true true 164 223 179 298
-Polygon -1 true true 45 285 30 285 30 240 15 195 45 210
-Circle -1 true true 3 83 150
-Rectangle -1 true true 65 221 80 296
-Polygon -1 true true 195 285 210 285 210 240 240 210 195 210
-Polygon -7500403 true false 276 85 285 105 302 99 294 83
-Polygon -7500403 true false 219 85 210 105 193 99 201 83
+0
+Rectangle -7500403 true true 151 225 180 285
+Rectangle -7500403 true true 47 225 75 285
+Rectangle -7500403 true true 15 75 210 225
+Circle -7500403 true true 135 75 150
+Circle -16777216 true false 165 76 116
 
 square
 false
@@ -597,9 +724,11 @@ Line -7500403 true 84 40 221 269
 wolf
 false
 0
-Polygon -16777216 true false 253 133 245 131 245 133
-Polygon -7500403 true true 2 194 13 197 30 191 38 193 38 205 20 226 20 257 27 265 38 266 40 260 31 253 31 230 60 206 68 198 75 209 66 228 65 243 82 261 84 268 100 267 103 261 77 239 79 231 100 207 98 196 119 201 143 202 160 195 166 210 172 213 173 238 167 251 160 248 154 265 169 264 178 247 186 240 198 260 200 271 217 271 219 262 207 258 195 230 192 198 210 184 227 164 242 144 259 145 284 151 277 141 293 140 299 134 297 127 273 119 270 105
-Polygon -7500403 true true -1 195 14 180 36 166 40 153 53 140 82 131 134 133 159 126 188 115 227 108 236 102 238 98 268 86 269 92 281 87 269 103 269 113
+Polygon -7500403 true true 135 285 195 285 270 90 30 90 105 285
+Polygon -7500403 true true 270 90 225 15 180 90
+Polygon -7500403 true true 30 90 75 15 120 90
+Circle -1 true false 183 138 24
+Circle -1 true false 93 138 24
 
 x
 false
