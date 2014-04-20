@@ -175,6 +175,9 @@ end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Robot Actions
+
+;;; Person Actions
+
 to move-to-supermarket
   face one-of supermarkets
   fd 1
@@ -209,7 +212,8 @@ to drop-beer
 end
 
 to get-money
-  set money robot-money
+  ;;;; set money robot-money
+  set money person-money
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
